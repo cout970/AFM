@@ -11,7 +11,7 @@ memoria del usuario y del número de acciones y esfuerzo mental necesarias para 
 Hay tres formas de navegar por las carpetas, aquí las explicamos ordenadas por orden
 de masculinidad:
 
-1. **El camino de UNIX**:
+1. **El camino de UNIX mejorado**:
  - Escribe la primera parte de la carpeta a la que quieres acceder
  - La aplicación te mostrará en rojo las coincidencias y en verde la primera coincidencia
  de esta forma si presionas tab accederás a la primera coincidencia
