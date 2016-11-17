@@ -18,18 +18,20 @@ class ColumnRenderer(override var column: IColumn) : IColumnRender {
         get() = 200
 
     override fun render(view: IView, index: Int) {
-//        if (column.elements.isNotEmpty()) {
+
+        val elem = MainRenderer.engine.document.getElementById("column$index")
+        for (i in 0 until elem.childNodes.length) {
+            elem.removeChild(elem.childNodes.item(i))
+        }
+        if (column.elements.isNotEmpty()) {
             val node = MainRenderer.engine.document.createElement("div")
             node.setAttribute("style", "outline: solid white 1px; padding: 3px; margin: 4px;")
             for ((i, e) in column.elements.withIndex()) {
                 printElement(i, e, view, node)
             }
-            val elem = MainRenderer.engine.document.getElementById("column$index")
-            for(i in 0 until elem.childNodes.length){
-                elem.removeChild(elem.childNodes.item(i))
-            }
+
             elem.appendChild(node)
-//        }
+        }
     }
 
     private fun printElement(i: Int, e: IElement, view: IView, elem: Element) {
@@ -49,9 +51,9 @@ class ColumnRenderer(override var column: IColumn) : IColumnRender {
         val span = elem.ownerDocument.createElement("span")
         if (e.file.isDirectory) {
             span.setAttribute("style", "color: white")
-        } else if(e.file.isFile){
+        } else if (e.file.isFile) {
             span.setAttribute("style", "color: green")
-        }else{
+        } else {
             span.setAttribute("style", "color: red")
 
         }

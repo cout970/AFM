@@ -1,25 +1,22 @@
 package com.cout970.afm.controller
 
 import com.cout970.afm.api.IColumn
-import com.cout970.afm.api.IColumnRender
 import com.cout970.afm.api.IElement
-import com.cout970.afm.api.IView
 import com.cout970.afm.model.Column
 import com.cout970.afm.model.Element
 import com.cout970.afm.model.WindowsRootElement
-import com.cout970.afm.view.ColumnRenderer
+import com.cout970.afm.util.windowEnv
+import com.cout970.afm.view.MainRenderer
 import java.io.File
 
 /**
  * Created by cout970 on 2016/11/15.
  */
-object MainController : IView {
+object MainController {
 
-    override val columns: List<IColumn> = listOf(Column(), Column(), Column())
-    override val selectedColumn: IColumn get() = columns[selectedColumnIndex]
+    val columns: List<IColumn> = listOf(Column(), Column(), Column())
+    val selectedColumn: IColumn get() = columns[selectedColumnIndex]
     var selectedColumnIndex = 0
-
-    override val columnRenderers: List<IColumnRender> = listOf(ColumnRenderer(columns[0]), ColumnRenderer(columns[1]), ColumnRenderer(columns[2]))
 
     fun init() {
         EventProvider.registerKeyListener { e ->
@@ -31,13 +28,13 @@ object MainController : IView {
                 if (selectedColumn.selectedIndex < selectedColumn.elements.size - 1) {
                     selectedColumn.selectedIndex++
                     updateRight(selectedColumnIndex)
-                    update()
+                    MainRenderer.update()
                 }
             } else if (e == KEY_UP) {
                 if (selectedColumn.selectedIndex > 0) {
                     selectedColumn.selectedIndex--
                     updateRight(selectedColumnIndex)
-                    update()
+                    MainRenderer.update()
                 }
             }
         }
@@ -50,13 +47,7 @@ object MainController : IView {
         }
     }
 
-    override fun update() {
-        for ((j, i) in columnRenderers.withIndex()) {
-            i.render(this, j)
-        }
-    }
-
-    override fun createRootElement(): IElement = if(System.getProperty("os.name").toLowerCase().contains("windows")) WindowsRootElement() else Element(File("/"))
+    fun createRootElement(): IElement = if(windowEnv()) WindowsRootElement() else Element(File("/"))
 
     private fun updateRight(index: Int) {
         columns[index + 1].clear()
@@ -97,7 +88,7 @@ object MainController : IView {
                         }
                         columns[2].selectedIndex = 0
                     }
-                    update()
+                    MainRenderer.update()
                 }
             }
         } else {//index 1
@@ -133,8 +124,7 @@ object MainController : IView {
                         }
                         columns[2].selectedIndex = 0
                     }
-
-                    update()
+                    MainRenderer.update()
                 }
             }
         }
@@ -163,7 +153,7 @@ object MainController : IView {
                     columns[0].selectedIndex = tmp
                     //update column 2
                     columns[2].clear()
-                    update()
+                    MainRenderer.update()
                 } else {
                     //move other columns
                     //update column 2
@@ -184,7 +174,7 @@ object MainController : IView {
                     columns[0].let { col ->
                         oldSelected.parent!!.getSubElements().forEach { col.add(it) }
                     }
-                    update()
+                    MainRenderer.update()
                 }
             }
         } else {//index 0

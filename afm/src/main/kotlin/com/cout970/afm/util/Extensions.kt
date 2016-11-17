@@ -7,3 +7,5 @@ import com.cout970.afm.api.IElement
  */
 
 fun IElement.isSelected(): Boolean = column?.selectedElement == this
+
+fun windowEnv(): Boolean = System.getProperty("os.name").toLowerCase().contains("windows")
