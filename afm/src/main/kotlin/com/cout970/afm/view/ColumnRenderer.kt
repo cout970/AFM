@@ -18,23 +18,28 @@ class ColumnRenderer(override var column: IColumn) : IColumnRender {
         get() = 200
 
     override fun render(view: IView, index: Int) {
+        if (MainRenderer.engine.document != null) {
+            val elem = MainRenderer.engine.document.getElementById("column$index")
+            if (elem != null) {
+                for (i in 0 until elem.childNodes.length) {
+                    elem.removeChild(elem.childNodes.item(i))
+                }
+                if (column.elements.isNotEmpty()) {
+                    elem.setAttribute("style", "")
+                    val node = MainRenderer.engine.document.createElement("div")
+                    for ((i, e) in column.elements.withIndex()) {
+                        printElement(i, index, e, view, node)
+                    }
 
-        val elem = MainRenderer.engine.document.getElementById("column$index")
-        for (i in 0 until elem.childNodes.length) {
-            elem.removeChild(elem.childNodes.item(i))
-        }
-        if (column.elements.isNotEmpty()) {
-            val node = MainRenderer.engine.document.createElement("div")
-            node.setAttribute("style", "outline: solid white 1px; padding: 3px; margin: 4px;")
-            for ((i, e) in column.elements.withIndex()) {
-                printElement(i, e, view, node)
+                    elem.appendChild(node)
+                } else {
+                    elem.setAttribute("style", "display: none !important;")
+                }
             }
-
-            elem.appendChild(node)
         }
     }
 
-    private fun printElement(i: Int, e: IElement, view: IView, elem: Element) {
+    private fun printElement(i: Int, colIndex: Int, e: IElement, view: IView, elem: Element) {
         var background: String? = null
         if (e.isSelected()) {
             if (column == view.selectedColumn) {
@@ -44,9 +49,12 @@ class ColumnRenderer(override var column: IColumn) : IColumnRender {
             }
         }
         val div = elem.ownerDocument.createElement("div")
+        div.setAttribute("onclick", "app.onClick(this)")
+        div.setAttribute("index", i.toString())
+        div.setAttribute("column", colIndex.toString())
 
         if (background != null) {
-            div.setAttribute("style", "background-color: $background;")
+            div.setAttribute("style", "background-color: $background; word-wrap: break-word;")
         }
         val span = elem.ownerDocument.createElement("span")
         if (e.file.isDirectory) {

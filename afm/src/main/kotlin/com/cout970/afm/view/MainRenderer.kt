@@ -7,6 +7,7 @@ import com.cout970.afm.api.IView
 import com.cout970.afm.controller.MainController
 import javafx.scene.web.WebEngine
 import java.io.FileInputStream
+import java.util.zip.ZipFile
 
 /**
  * Created by cout970 on 2016/11/17.
@@ -26,65 +27,64 @@ object MainRenderer : IView {
     var fileContent: String = ""
 
     override fun update() {
-        Runnable {
-            synchronized(this) {
-                try {
-                    fileContent = ""
-                    if (MainController.selectedColumn.selectedElement?.file?.isFile ?: false) {
-                        val offset = when (MainController.selectedColumnIndex) {
-                            0 -> columnRenderers[0].width
-                            1 -> columnRenderers[0].width + columnRenderers[1].width
-                            2 -> columnRenderers[0].width + columnRenderers[1].width + columnRenderers[2].width
-                            else -> 0
+        fileContent = ""
+        try {
+            if (MainController.selectedColumn.selectedElement?.file?.isFile ?: false) {
+                Thread {
+                    val file = MainController.selectedColumn.selectedElement?.file!!
+                    if (file.extension == "zip" || file.extension == "jar") {
+                        val zip = ZipFile(file)
+                        fileContent += "Zip File:\n"
+                        zip.stream().forEach { fileContent += "\t${it.name}\n" }
+                        MainApplication.runOnMain(Runnable {
+                            repaint()
+                        })
+                    } else {
+                        val buff = ByteArray(100)
+                        val read: Int
+                        try {
+                            read = FileInputStream(file).read(buff)
+                        } catch (e: Exception) {
+                            return@Thread
                         }
-                        val limit = (width - offset) / 8
-                        if (limit > 10) {
-
-
-                            val file = MainController.selectedColumn.selectedElement?.file!!
-                            val buff = ByteArray(100)
-                            val read: Int
-                            try {
-                                read = FileInputStream(file).read(buff)
-                            } catch (e: Exception) {
+                        var isTxt = true
+                        for (i in 0..Math.min(100, read) - 1) {
+                            if (buff[i].toInt() < 32 && buff[i] !in "\n\t\r".toByteArray()) {
+                                isTxt = false
+                                break
+                            }
+                        }
+                        if (isTxt) {
+                            fileContent = file.readText()
+                            MainApplication.runOnMain(Runnable {
                                 repaint()
-                                return@Runnable
-                            }
-                            var isTxt = true
-                            for (i in 0..Math.min(100, read) - 1) {
-                                if (buff[i].toInt() < 32 && buff[i] !in "\n\t\r".toByteArray()) {
-                                    isTxt = false
-                                    break
-                                }
-                            }
-                            if (isTxt) {
-                                fileContent = file.readText().replace("\t", "    ")
-                            }
+                            })
                         }
                     }
-                } catch (e: Exception) {
-                    //ignored
-                }
+                }.start()
             }
-            repaint()
-        }.run()
-
+        } catch (e: Exception) {
+            //ignored
+        }
+        repaint()
     }
 
     fun repaint() {
-        for ((j, i) in columnRenderers.withIndex()) {
-            i.render(this, j)
-        }
-        val node = engine.document.getElementById("path")
-        node.textContent = selectedColumn.selectedElement?.file?.absolutePath ?: ""
+        if (engine.document != null) {
+            for ((j, i) in columnRenderers.withIndex()) {
+                i.render(this, j)
+            }
+            val node = engine.document.getElementById("path")
+            node.setAttribute("value", selectedColumn.selectedElement?.file?.absolutePath ?: "")
 
-        if (fileContent.isNotEmpty()) {
-            engine.document.getElementById("column2").setAttribute("style", "display: none;")
-            engine.document.getElementById("text").setAttribute("style", "display: block;")
-            engine.document.getElementById("text").textContent = fileContent
-        } else {
-            engine.document.getElementById("column2").setAttribute("style", "display: block;")
-            engine.document.getElementById("text").setAttribute("style", "display: none;")
+            if (fileContent.isNotEmpty()) {
+                engine.document.getElementById("column2").setAttribute("style", "display: none;")
+                engine.document.getElementById("text").setAttribute("style", "display: block;")
+                engine.document.getElementById("text").textContent = fileContent
+            } else {
+                engine.document.getElementById("column2").setAttribute("style", "display: block;")
+                engine.document.getElementById("text").setAttribute("style", "display: none;")
+            }
         }
     }
 
@@ -96,30 +96,71 @@ object MainRenderer : IView {
 <head>
     <meta charset="UTF-8">
     <style>
-    .column {
-        width: 25%;
-        height: 100%;
-        float: left;
+    * {
+        margin: 0;
+        padding: 0;
+    }
+    .columnGen {
+        word-wrap: break-word;
+        margin-left: 0;
+        padding: 3px;
+        overflow-y: scroll;
+        max-height: 93vh;
+        outline: solid white 1px;
+    }
+    .column_fixed {
+        width: 200px;
     }
     #text {
-        width: 45%;
-        float: left;
+        border: solid white 1px;
+        height: 81vh;
         color: white;
-        outline: solid 1px;
+        background-color: black;
+        width: 98%;
+        padding-left: 1%;
+        padding-right: 1%;
+    }
+    .cell {
+        display: table-cell;
+        vertical-align: top;
     }
     #path {
-        width: 100%;
+        border: solid white 1px;
+        margin-left: 1%;
+        margin-top: 5px;
+        margin-bottom: 5px;
+        font-size: 1em;
+        width: 97%;
         color: white;
+        padding-top: 2px;
+        padding-bottom: 2px;
+        padding-left: 0.5%;
+        padding-right: 0.5%;
+        background-color: black;
+    }
+    .wrapper {
+        display: table;
+        table-layout: fixed;
+        margin-left: 1%;
+        width: 98%;
     }
     </style>
 </head>
 <body style="width: 100vw; background-color: #101010; overflow-y: hidden; overflow-x: hidden;">
-<span id="path"></span>
-<div>
-    <div id="column0" class="column"></div>
-    <div id="column1" class="column"></div>
-    <div id="column2" class="column"></div>
-    <div id="text"></div>
+<input type="text" id="path">
+<div style="width: 100vw;">
+    <div class="wrapper">
+        <div class="cell column_fixed">
+            <div id="column0" class="columnGen"></div>
+        </div>
+        <div class="cell column_fixed">
+            <div id="column1" class="columnGen"></div>
+        </div>
+        <div class="cell">
+            <div id="column2" class="columnGen" style="background-color: red;"></div>
+            <textarea id="text"></textarea>
+        </div>
+    </div>
 </div>
 </body>
 </html>"""

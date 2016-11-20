@@ -22,7 +22,6 @@ data class Element(override val file: File) : IElement {
     }
 
     override val parent: IElement? get() {
-        println("$file -> ${file.parent}")
         if (file.parentFile == null){
             if(windowEnv()) return WindowsRootElement()
             return null

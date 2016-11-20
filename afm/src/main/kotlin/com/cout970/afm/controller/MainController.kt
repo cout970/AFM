@@ -26,15 +26,11 @@ object MainController {
                 moveLeft()
             } else if (e == KEY_DOWN) {
                 if (selectedColumn.selectedIndex < selectedColumn.elements.size - 1) {
-                    selectedColumn.selectedIndex++
-                    updateRight(selectedColumnIndex)
-                    MainRenderer.update()
+                    select(selectedColumn.selectedIndex + 1)
                 }
             } else if (e == KEY_UP) {
                 if (selectedColumn.selectedIndex > 0) {
-                    selectedColumn.selectedIndex--
-                    updateRight(selectedColumnIndex)
-                    MainRenderer.update()
+                    select(selectedColumn.selectedIndex - 1)
                 }
             }
         }
@@ -47,9 +43,17 @@ object MainController {
         }
     }
 
-    fun createRootElement(): IElement = if(windowEnv()) WindowsRootElement() else Element(File("/"))
+    fun select(index: Int) {
+        if(index in selectedColumn.elements.indices) {
+            selectedColumn.select(index)
+            updateRight(selectedColumnIndex)
+            MainRenderer.update()
+        }
+    }
 
-    private fun updateRight(index: Int) {
+    fun createRootElement(): IElement = if (windowEnv()) WindowsRootElement() else Element(File("/"))
+
+    fun updateRight(index: Int) {
         columns[index + 1].clear()
         columns[index].elements[columns[index].selectedIndex].getSubElements().forEach {
             columns[index + 1].add(it)

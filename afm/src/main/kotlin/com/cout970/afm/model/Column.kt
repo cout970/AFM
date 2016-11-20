@@ -48,4 +48,10 @@ class Column() : IColumn {
         elementList.forEachIndexed { i, iElement -> listeners.forEach { l -> l(i, iElement, ChangeAction.REMOVE) } }
         elementList.clear()
     }
+
+    override fun select(index: Int) {
+        if(index in elementList.indices){
+            selectedIndex = index
+        }
+    }
 }

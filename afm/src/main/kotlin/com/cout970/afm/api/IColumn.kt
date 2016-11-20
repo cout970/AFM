@@ -18,6 +18,8 @@ interface IColumn {
     fun remove(e: IElement)
 
     fun clear()
+
+    fun select(index: Int)
 }
 
 enum class ChangeAction {
