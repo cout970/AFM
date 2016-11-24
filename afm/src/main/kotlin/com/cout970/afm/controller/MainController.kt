@@ -7,6 +7,9 @@ import com.cout970.afm.model.Element
 import com.cout970.afm.model.WindowsRootElement
 import com.cout970.afm.util.windowEnv
 import com.cout970.afm.view.MainRenderer
+import javafx.application.Platform
+import javafx.scene.input.KeyCode
+import java.awt.Desktop
 import java.io.File
 
 /**
@@ -17,21 +20,44 @@ object MainController {
     val columns: List<IColumn> = listOf(Column(), Column(), Column())
     val selectedColumn: IColumn get() = columns[selectedColumnIndex]
     var selectedColumnIndex = 0
+    var showFiles = true
 
     fun init() {
         EventProvider.registerKeyListener { e ->
-            if (e == KEY_RIGHT) {
-                moveRight()
-            } else if (e == KEY_LEFT) {
-                moveLeft()
-            } else if (e == KEY_DOWN) {
-                if (selectedColumn.selectedIndex < selectedColumn.elements.size - 1) {
-                    select(selectedColumn.selectedIndex + 1)
+            Platform.runLater {
+                if (e.code.impl_getCode() == KEY_RIGHT) {
+                    moveRight()
+                } else if (e.code.impl_getCode() == KEY_LEFT) {
+                    moveLeft()
+                } else if (e.code.impl_getCode() == KEY_DOWN) {
+                    if (selectedColumn.selectedIndex < selectedColumn.elements.size - 1) {
+                        select(selectedColumn.selectedIndex + 1)
+                    }
+                } else if (e.code.impl_getCode() == KEY_UP) {
+                    if (selectedColumn.selectedIndex > 0) {
+                        select(selectedColumn.selectedIndex - 1)
+                    }
+                } else if (e.code == KeyCode.O && e.isControlDown) {
+                    selectedColumn.selectedElement?.let {
+                        try {
+                            Desktop.getDesktop().open(it.file)
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+                    }
+                } else if (e.code == KeyCode.E && e.isControlDown) {
+                    selectedColumn.selectedElement?.let {
+                        try {
+                            Desktop.getDesktop().edit(it.file)
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+                    }
+                } else if (e.code == KeyCode.F && e.isControlDown) {
+                    showFiles = !showFiles
+                    updateRight(selectedColumnIndex)
                 }
-            } else if (e == KEY_UP) {
-                if (selectedColumn.selectedIndex > 0) {
-                    select(selectedColumn.selectedIndex - 1)
-                }
+                MainRenderer.update()
             }
         }
         createRootElement().getSubElements().forEach {
@@ -44,7 +70,7 @@ object MainController {
     }
 
     fun select(index: Int) {
-        if(index in selectedColumn.elements.indices) {
+        if (index in selectedColumn.elements.indices) {
             selectedColumn.select(index)
             updateRight(selectedColumnIndex)
             MainRenderer.update()
@@ -177,6 +203,14 @@ object MainController {
                     columns[0].clear()
                     columns[0].let { col ->
                         oldSelected.parent!!.getSubElements().forEach { col.add(it) }
+                    }
+                    columns[0].selectedIndex = 0
+                    if (columns[1].selectedElement != null) {
+                        for ((i, e) in columns[0].elements.withIndex()) {
+                            if (e.file.absolutePath == columns[1].selectedElement!!.file.parentFile?.absolutePath) {
+                                columns[0].selectedIndex = i
+                            }
+                        }
                     }
                     MainRenderer.update()
                 }

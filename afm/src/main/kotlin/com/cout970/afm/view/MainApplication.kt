@@ -32,6 +32,8 @@ class MainApplication : Application() {
         MainRenderer.engine = webView.engine
         webView.engine.loadContent(MainRenderer.template)
         val box = StackPane()
+        box.isCache = false
+        webView.isCache = false
         box.children.add(webView)
         scene = Scene(box).apply {
             EventProvider.init(this)

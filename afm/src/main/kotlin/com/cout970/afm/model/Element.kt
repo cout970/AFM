@@ -2,6 +2,7 @@ package com.cout970.afm.model
 
 import com.cout970.afm.api.IColumn
 import com.cout970.afm.api.IElement
+import com.cout970.afm.controller.MainController
 import com.cout970.afm.util.windowEnv
 import java.io.File
 
@@ -18,7 +19,7 @@ data class Element(override val file: File) : IElement {
 
     override fun getSubElements(): List<IElement> {
         val subFiles = file.listFiles()?.toList() ?: emptyList()
-        return subFiles.map { create(it) }
+        return subFiles.filter { if(MainController.showFiles) true else !it.isFile }.map { create(it) }
     }
 
     override val parent: IElement? get() {

@@ -5,6 +5,7 @@ import com.cout970.afm.api.IColumnRender
 import com.cout970.afm.api.IElement
 import com.cout970.afm.api.IView
 import com.cout970.afm.controller.MainController
+import javafx.application.Platform
 import javafx.scene.web.WebEngine
 import java.io.FileInputStream
 import java.util.zip.ZipFile
@@ -28,9 +29,10 @@ object MainRenderer : IView {
 
     override fun update() {
         fileContent = ""
+        repaint()
         try {
             if (MainController.selectedColumn.selectedElement?.file?.isFile ?: false) {
-                Thread {
+                Platform.runLater {
                     val file = MainController.selectedColumn.selectedElement?.file!!
                     if (file.extension == "zip" || file.extension == "jar") {
                         val zip = ZipFile(file)
@@ -39,34 +41,59 @@ object MainRenderer : IView {
                         MainApplication.runOnMain(Runnable {
                             repaint()
                         })
-                    } else {
+                    } else if(file.length() < 1024 * 50) {
                         val buff = ByteArray(100)
                         val read: Int
                         try {
                             read = FileInputStream(file).read(buff)
                         } catch (e: Exception) {
-                            return@Thread
+                            return@runLater
                         }
-                        var isTxt = true
+                        var errors = 0
                         for (i in 0..Math.min(100, read) - 1) {
                             if (buff[i].toInt() < 32 && buff[i] !in "\n\t\r".toByteArray()) {
-                                isTxt = false
-                                break
+                                errors++
                             }
                         }
+                        val isTxt = errors < read / 4
                         if (isTxt) {
                             fileContent = file.readText()
                             MainApplication.runOnMain(Runnable {
                                 repaint()
                             })
+                        } else {
+                            fileContent = ""
+                            var aux = 0
+                            var count = 0
+
+
+                            if (file.canRead()) {
+                                val stream = file.inputStream()
+                                while (true) {
+                                    aux = stream.read()
+                                    if (aux == -1) break
+                                    count++
+                                    if (count > 1024) break
+                                    val str = Integer.toHexString(aux).toUpperCase()
+                                    if (str.length == 2) {
+                                        fileContent += str
+                                    } else {
+                                        fileContent += '0' + str
+                                    }
+                                    fileContent += ' '
+                                }
+                                MainApplication.runOnMain(Runnable {
+                                    repaint()
+                                })
+                            }
                         }
                     }
-                }.start()
+                }
             }
         } catch (e: Exception) {
             //ignored
         }
-        repaint()
+
     }
 
     fun repaint() {
@@ -86,6 +113,7 @@ object MainRenderer : IView {
                 engine.document.getElementById("text").setAttribute("style", "display: none;")
             }
         }
+
     }
 
     override fun createRootElement(): IElement = MainController.createRootElement()
@@ -99,12 +127,14 @@ object MainRenderer : IView {
     * {
         margin: 0;
         padding: 0;
+        font-size: 24px;
+        -fx-font-smoothing-type: lcd;
+        font-family: Helvetica, Monospaced, sans-serif;
     }
     .columnGen {
         word-wrap: break-word;
         margin-left: 0;
         padding: 3px;
-        overflow-y: scroll;
         max-height: 93vh;
         outline: solid white 1px;
     }
@@ -115,6 +145,7 @@ object MainRenderer : IView {
         border: solid white 1px;
         height: 81vh;
         color: white;
+        font-size: 14px;
         background-color: black;
         width: 98%;
         padding-left: 1%;
@@ -147,7 +178,7 @@ object MainRenderer : IView {
     </style>
 </head>
 <body style="width: 100vw; background-color: #101010; overflow-y: hidden; overflow-x: hidden;">
-<input type="text" id="path">
+<input type="text" id="path" readonly>
 <div style="width: 100vw;">
     <div class="wrapper">
         <div class="cell column_fixed">
@@ -158,7 +189,7 @@ object MainRenderer : IView {
         </div>
         <div class="cell">
             <div id="column2" class="columnGen" style="background-color: red;"></div>
-            <textarea id="text"></textarea>
+            <textarea id="text" readonly></textarea>
         </div>
     </div>
 </div>

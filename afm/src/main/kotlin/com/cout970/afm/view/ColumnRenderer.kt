@@ -27,8 +27,10 @@ class ColumnRenderer(override var column: IColumn) : IColumnRender {
                 if (column.elements.isNotEmpty()) {
                     elem.setAttribute("style", "")
                     val node = MainRenderer.engine.document.createElement("div")
+                    var par = true
                     for ((i, e) in column.elements.withIndex()) {
-                        printElement(i, index, e, view, node)
+                        printElement(i, index, e, view, node, par)
+                        par = !par
                     }
 
                     elem.appendChild(node)
@@ -39,8 +41,14 @@ class ColumnRenderer(override var column: IColumn) : IColumnRender {
         }
     }
 
-    private fun printElement(i: Int, colIndex: Int, e: IElement, view: IView, elem: Element) {
+    private fun printElement(i: Int, colIndex: Int, e: IElement, view: IView, elem: Element, par: Boolean) {
         var background: String? = null
+        if(par){
+            background = "#282828"
+        }else{
+            background = "#303030"
+        }
+
         if (e.isSelected()) {
             if (column == view.selectedColumn) {
                 background = "blue"
@@ -48,14 +56,13 @@ class ColumnRenderer(override var column: IColumn) : IColumnRender {
                 background = "#4040FF"
             }
         }
+
         val div = elem.ownerDocument.createElement("div")
         div.setAttribute("onclick", "app.onClick(this)")
         div.setAttribute("index", i.toString())
         div.setAttribute("column", colIndex.toString())
 
-        if (background != null) {
-            div.setAttribute("style", "background-color: $background; word-wrap: break-word;")
-        }
+        div.setAttribute("style", "background-color: $background; word-wrap: break-word; margin-left 2px;")
         val span = elem.ownerDocument.createElement("span")
         if (e.file.isDirectory) {
             span.setAttribute("style", "color: white")

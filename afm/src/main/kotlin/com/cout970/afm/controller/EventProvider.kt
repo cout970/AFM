@@ -15,15 +15,15 @@ const val KEY_DOWN = 0x28
 
 object EventProvider {
 
-    private val listeners = mutableListOf<(code: Int) -> Unit>()
+    private val listeners = mutableListOf<(code: KeyEvent) -> Unit>()
 
     fun init(s: Scene){
         s.onKeyPressed = EventHandler<KeyEvent> {
-            listeners.forEach { l -> l(it.code.impl_getCode()) }
+            listeners.forEach { l -> l(it) }
         }
     }
 
-    fun registerKeyListener(listener: (code: Int) -> Unit) {
+    fun registerKeyListener(listener: (code: KeyEvent) -> Unit) {
         listeners += listener
     }
 }
