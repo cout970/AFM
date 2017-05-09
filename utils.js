@@ -13,7 +13,7 @@ window.addEventListener('resize',function () {
 
     var sys = require('util')
 
-    var exec = require('child_process').exec;
+    .exec;
 
     child = exec("./capture.zsh 'vim -'", function (error, stdout, stderr) {
 
